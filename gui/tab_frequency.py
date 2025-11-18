@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
+import time # <<< THÊM VÀO
 
 # Import các hàm lọc tần số
 from processing.hw3_ops_frequency import (
@@ -209,11 +210,11 @@ class TabFrequency(ttk.Frame):
             self.label_n.config(state=tk.DISABLED)
             self.scale_n.config(state=tk.DISABLED)
 
-    # ===== HÀM XỬ LÝ (ĐÃ TÁCH RA) =====
+    # ===== HÀM XỬ LÝ (ĐÃ CẬP NHẬT) =====
     
     def _run_filter_logic(self):
-        """Hàm logic chung để chạy bộ lọc. Trả về ảnh kết quả."""
-        if not self.check_image_loaded(): return None
+        """Hàm logic chung. Trả về (ảnh kết quả, dictionary thời gian)"""
+        if not self.check_image_loaded(): return None, None
         
         mode = self.filter_choice.get()
         d0 = self.param_d0.get()
@@ -229,38 +230,51 @@ class TabFrequency(ttk.Frame):
             elif mode == "GLPF": filter_func = GLPF
             elif mode == "GHPF": filter_func = GHPF
             else:
-                return None
+                return None, None
 
-            result_cv = None
+            # === HÀM NÀY BÂY GIỜ TRẢ VỀ (result_cv, timings) ===
             if filter_func:
                 if mode in ["BLPF", "BHPF"]:
-                    result_cv = apply_frequency_filter(img_input, filter_func, d0, n)
+                    return apply_frequency_filter(img_input, filter_func, d0, n)
                 else:
-                    result_cv = apply_frequency_filter(img_input, filter_func, d0)
-            return result_cv
+                    return apply_frequency_filter(img_input, filter_func, d0)
+            return None, None
         
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi lọc tần số: {e}")
-            return None
+            return None, None
 
     def apply_filter_live(self):
         """Được gọi bởi SLIDER. Chỉ xem trước, không lưu history."""
-        result_cv = self._run_filter_logic()
+        result_cv, _ = self._run_filter_logic() # Bỏ qua timings
         if result_cv is not None:
             self.display_live_preview(result_cv) # Hiển thị trên canvas 'edited'
             
     def apply_filter_final(self):
-        """Được gọi bởi NÚT BẤM. Áp dụng và lưu history."""
+        """Được gọi bởi NÚT BẤM. Áp dụng, lưu history, và hiển thị thời gian."""
         # 1. Lưu trạng thái hiện tại vào history
         self.history.append(self.img_processed_cv.copy())
         
-        # 2. Chạy bộ lọc
-        result_cv = self._run_filter_logic()
+        # 2. Chạy bộ lọc và nhận thời gian
+        result_cv, timings = self._run_filter_logic()
         
         # 3. Cập nhật ảnh chính
         if result_cv is not None:
             self.img_processed_cv = result_cv
             self.display_images() # Hiển thị (cập nhật vĩnh viễn)
+            
+            # === HIỂN THỊ POPUP THÔNG BÁO THỜI GIAN ===
+            if timings:
+                total_time = sum(timings.values())
+                # Format chuỗi thông báo
+                details = "\n".join([f"  - {step}: {ms:.2f} ms" for step, ms in timings.items()])
+                messagebox.showinfo(
+                    "Đo thời gian (Miền Tần số)",
+                    f"Thao tác: {self.filter_choice.get()}\n"
+                    f"Tổng thời gian: {total_time:.2f} ms\n\n"
+                    f"Chi tiết 5 công đoạn:\n"
+                    f"{details}"
+                )
 
     def display_live_preview(self, preview_img):
         """Hiển thị ảnh xem trước trên canvas 'edited' (Giống display_images)"""

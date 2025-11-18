@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
+import time # <<< THÊM VÀO
 
 # === SỬA IMPORT: Trỏ đến file PIL ops mới ===
 from processing.hw2_ops_spatial_pil import (
@@ -181,10 +182,6 @@ class TabSpatial(ttk.Frame):
                 if canvas_w <= 1 or canvas_h <= 1:
                     canvas_w, canvas_h = 650, 650
 
-                # === BỎ BƯỚC CHUYỂN ĐỔI ===
-                # img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-                # img_pil = Image.fromarray(img_rgb)
-                
                 img_pil_copy = pil_img.copy() # Tạo bản sao để thumbnail
                 img_pil_copy.thumbnail((canvas_w, canvas_h))
                 
@@ -223,6 +220,9 @@ class TabSpatial(ttk.Frame):
             # Lấy ảnh PIL làm đầu vào
             img_input = self.img_pil.copy() if live else self.img_edited_pil.copy()
 
+            # === BẮT ĐẦU ĐO THỜI GIAN ===
+            start_time = time.perf_counter()
+            
             if mode == "Negative":
                 result = negative_image(img_input)
             elif mode == "Log":
@@ -238,11 +238,20 @@ class TabSpatial(ttk.Frame):
             else:
                 return
             
+            # === KẾT THÚC ĐO THỜI GIAN ===
+            total_time_ms = (time.perf_counter() - start_time) * 1000
+
             if live:
                 self.display_live_preview(result)
             else:
                 self.img_edited_pil = result # Lưu kết quả PIL
                 self.display_images()
+                # === HIỂN THỊ POPUP THỜI GIAN ===
+                messagebox.showinfo(
+                    "Đo thời gian (Miền Không gian)",
+                    f"Thao tác: {mode}\n"
+                    f"Tổng thời gian: {total_time_ms:.2f} ms"
+                )
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi biến đổi (PIL): {e}")
 
@@ -259,6 +268,9 @@ class TabSpatial(ttk.Frame):
         try:
             # Lấy ảnh PIL làm đầu vào
             img_input = self.img_pil.copy() if live else self.img_edited_pil.copy()
+
+            # === BẮT ĐẦU ĐO THỜI GIAN ===
+            start_time = time.perf_counter()
 
             if mode == "Mean":
                 result = mean_filter_basic(img_input, k)
@@ -277,11 +289,20 @@ class TabSpatial(ttk.Frame):
             else:
                 return
 
+            # === KẾT THÚC ĐO THỜI GIAN ===
+            total_time_ms = (time.perf_counter() - start_time) * 1000
+
             if live:
                 self.display_live_preview(result)
             else:
                 self.img_edited_pil = result # Lưu kết quả PIL
                 self.display_images()
+                # === HIỂN THỊ POPUP THỜI GIAN ===
+                messagebox.showinfo(
+                    "Đo thời gian (Miền Không gian)",
+                    f"Thao tác: {mode} (kích thước {k}x{k})\n"
+                    f"Tổng thời gian: {total_time_ms:.2f} ms"
+                )
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi lọc (PIL): {e}")
 

@@ -1,5 +1,6 @@
 import numpy as np
-import cv2 # Sử dụng cv2
+import cv2
+import time # <<< THÊM VÀO
 
 # Frequency 
 def create_D_matrix(rows, cols):
@@ -10,15 +11,25 @@ def create_D_matrix(rows, cols):
     D = np.sqrt((U - center_row)**2 + (V - center_col)**2)
     return D
 
+# === HÀM ĐÃ ĐƯỢC CẬP NHẬT ĐỂ TRẢ VỀ TIMINGS ===
 def apply_frequency_filter(img_gray, H_filter_func, D0, n=None):
     rows, cols = img_gray.shape
     
-    # Đảm bảo D0 không phải là 0 để tránh lỗi chia
     if D0 == 0: D0 = 1e-6 
         
-    dft = cv2.dft(np.float32(img_gray), flags=cv2.DFT_COMPLEX_OUTPUT)
-    dft_shift = np.fft.fftshift(dft)
+    timings = {} # Dictionary để lưu thời gian
     
+    # === CÔNG ĐOẠN 1: Forward DFT ===
+    start_time = time.perf_counter()
+    dft = cv2.dft(np.float32(img_gray), flags=cv2.DFT_COMPLEX_OUTPUT)
+    timings['1_Forward_DFT_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    # === CÔNG ĐOẠN 2: Shift (dịch tâm) ===
+    start_time = time.perf_counter()
+    dft_shift = np.fft.fftshift(dft)
+    timings['2_FFT_Shift_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    # Tạo bộ lọc H
     if n is None:
         H = H_filter_func(rows, cols, D0)
     else:
@@ -28,15 +39,28 @@ def apply_frequency_filter(img_gray, H_filter_func, D0, n=None):
     H_complex[:,:,0] = H
     H_complex[:,:,1] = H
     
+    # === CÔNG ĐOẠN 3: Nhân với bộ lọc (H * F) ===
+    start_time = time.perf_counter()
     G_shift = dft_shift * H_complex
+    timings['3_Multiply_Filter_H_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    # === CÔNG ĐOẠN 4: Inverse Shift (dịch về) ===
+    start_time = time.perf_counter()
     G_ishift = np.fft.ifftshift(G_shift)
+    timings['4_IFFT_Shift_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    # === CÔNG ĐOẠN 5: Inverse DFT (về miền không gian) ===
+    start_time = time.perf_counter()
     img_back = cv2.idft(G_ishift)
     img_back = cv2.magnitude(img_back[:,:,0], img_back[:,:,1])
     cv2.normalize(img_back, img_back, 0, 255, cv2.NORM_MINMAX)
     img_out = np.uint8(img_back)
+    timings['5_Inverse_DFT_ms'] = (time.perf_counter() - start_time) * 1000
     
-    return img_out
+    # Trả về cả ảnh VÀ dictionary thời gian
+    return img_out, timings
 
+# (Các hàm IHPF, ILPF, BLPF... giữ nguyên)
 def IHPF(rows, cols, D0):
     D = create_D_matrix(rows, cols)
     H = np.ones((rows, cols))
