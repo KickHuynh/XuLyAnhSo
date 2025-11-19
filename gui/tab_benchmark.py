@@ -22,7 +22,6 @@ class TabBenchmark(ttk.Frame):
         self.img_gray_cv = None
         self.chart_tk = None 
 
-        # (Layout giữ nguyên, không cần sửa)
         main_frame = ttk.Frame(self, padding=20)
         main_frame.pack(fill=tk.BOTH, expand=True)
         settings_frame = ttk.Frame(main_frame, width=350)
@@ -63,7 +62,7 @@ class TabBenchmark(ttk.Frame):
         self.chart_label = tk.Label(results_frame, bg="#f0f0f0", relief="sunken")
         self.chart_label.pack(fill=tk.BOTH, expand=True)
 
-    # ===== HÀM LOGIC (Hàm select_image giữ nguyên) =====
+    # ===== HÀM LOGIC =====
 
     def select_image(self):
         path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
@@ -88,7 +87,7 @@ class TabBenchmark(ttk.Frame):
             self.img_gray_cv = None
             self.run_button.config(state=tk.DISABLED)
 
-    # === HÀM 1: BẮT ĐẦU CHẠY (Chạy trên luồng GUI) ===
+    # === HÀM 1: BẮT ĐẦU CHẠY ===
     def run_benchmark(self):
         if not self.img_pil or not self.img_gray_cv:
             messagebox.showwarning("Thiếu ảnh", "Vui lòng chọn một ảnh để kiểm tra trước.")
@@ -100,15 +99,14 @@ class TabBenchmark(ttk.Frame):
         self.chart_label.config(image=None)
         self.chart_label.image = None
         self.status_label.config(text="Đang chạy... (CÓ THỂ RẤT LÂU)... Vui lòng đợi...")
-        self.run_button.config(state=tk.DISABLED) # Tắt nút bấm
+        self.run_button.config(state=tk.DISABLED) 
         self.update_idletasks() 
 
         # 2. Tạo và khởi động LUỒNG NỀN
-        # daemon=True nghĩa là luồng này sẽ tự chết khi ứng dụng chính tắt
         thread = threading.Thread(target=self._benchmark_worker_thread, daemon=True)
         thread.start()
 
-    # === HÀM 2: CÔNG VIỆC NẶNG (Chạy trên LUỒNG NỀN) ===
+    # === HÀM 2: CÔNG VIỆC NẶNG ===
     def _benchmark_worker_thread(self):
         """Hàm này chạy trong luồng nền, không được đụng vào GUI"""
         try:

@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import time # <<< THÊM VÀO
+import time 
 
 # Frequency 
 def create_D_matrix(rows, cols):
@@ -11,17 +11,23 @@ def create_D_matrix(rows, cols):
     D = np.sqrt((U - center_row)**2 + (V - center_col)**2)
     return D
 
-# === HÀM ĐÃ ĐƯỢC CẬP NHẬT ĐỂ TRẢ VỀ TIMINGS ===
-def apply_frequency_filter(img_gray, H_filter_func, D0, n=None):
-    rows, cols = img_gray.shape
+# === HÀM ĐÃ ĐƯỢC CẬP NHẬT ĐỂ XỬ LÝ ẢNH MÀU (YUV) ===
+def apply_frequency_filter(img_bgr, H_filter_func, D0, n=None):
     
-    if D0 == 0: D0 = 1e-6 
-        
     timings = {} # Dictionary để lưu thời gian
     
-    # === CÔNG ĐOẠN 1: Forward DFT ===
+    # === CÔNG ĐOẠN A: Chuyển sang YUV ===
     start_time = time.perf_counter()
-    dft = cv2.dft(np.float32(img_gray), flags=cv2.DFT_COMPLEX_OUTPUT)
+    img_yuv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YUV)
+    y, u, v = cv2.split(img_yuv)
+    timings['A_Convert_YUV_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    rows, cols = y.shape # Lấy kích thước từ kênh Y
+    if D0 == 0: D0 = 1e-6 
+    
+    # === CÔNG ĐOẠN 1: Forward DFT (trên kênh Y) ===
+    start_time = time.perf_counter()
+    dft = cv2.dft(np.float32(y), flags=cv2.DFT_COMPLEX_OUTPUT)
     timings['1_Forward_DFT_ms'] = (time.perf_counter() - start_time) * 1000
     
     # === CÔNG ĐOẠN 2: Shift (dịch tâm) ===
@@ -54,11 +60,17 @@ def apply_frequency_filter(img_gray, H_filter_func, D0, n=None):
     img_back = cv2.idft(G_ishift)
     img_back = cv2.magnitude(img_back[:,:,0], img_back[:,:,1])
     cv2.normalize(img_back, img_back, 0, 255, cv2.NORM_MINMAX)
-    img_out = np.uint8(img_back)
+    y_filtered = np.uint8(img_back) # Đây là kênh Y đã được lọc
     timings['5_Inverse_DFT_ms'] = (time.perf_counter() - start_time) * 1000
     
-    # Trả về cả ảnh VÀ dictionary thời gian
-    return img_out, timings
+    # === CÔNG ĐOẠN B: Ghép YUV và chuyển về BGR ===
+    start_time = time.perf_counter()
+    img_yuv_filtered = cv2.merge([y_filtered, u, v])
+    img_bgr_filtered = cv2.cvtColor(img_yuv_filtered, cv2.COLOR_YUV2BGR)
+    timings['B_Merge_BGR_ms'] = (time.perf_counter() - start_time) * 1000
+    
+    # Trả về ảnh MÀU đã lọc và dictionary thời gian
+    return img_bgr_filtered, timings
 
 # (Các hàm IHPF, ILPF, BLPF... giữ nguyên)
 def IHPF(rows, cols, D0):

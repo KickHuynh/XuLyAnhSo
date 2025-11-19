@@ -2,7 +2,7 @@ import numpy as np
 from PIL import Image, ImageOps, ImageFilter
 
 # =========================================
-# 1. Hàm tích chập (Conv) của bạn
+# 1. Hàm tích chập (Conv)
 # =========================================
 def conv(A, k, b=0):
     kh, kw = k.shape

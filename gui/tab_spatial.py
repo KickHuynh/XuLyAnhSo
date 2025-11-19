@@ -3,9 +3,8 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
-import time # <<< THÊM VÀO
+import time 
 
-# === SỬA IMPORT: Trỏ đến file PIL ops mới ===
 from processing.hw2_ops_spatial_pil import (
     negative_image, log_transform, gamma_transform, piecewise_linear, equalize_histogram,
     mean_filter_basic, gaussian_filter_basic,
@@ -18,13 +17,12 @@ class TabSpatial(ttk.Frame):
         super().__init__(parent)
         self.main_app = main_app_ref
         
-        # === SỬA LOGIC: Dùng biến PIL làm ảnh chính ===
-        self.img_pil = None         # Ảnh PIL gốc
-        self.img_edited_pil = None  # Ảnh PIL đã chỉnh sửa
-        self.history = []           # History sẽ lưu ảnh PIL
+        self.img_pil = None         
+        self.img_edited_pil = None  
+        self.history = []           
         self.slider_timer = None
 
-        # ===== LAYOUT (Giữ nguyên) =====
+        # ===== LAYOUT =====
         main_frame = ttk.Frame(self)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -60,7 +58,7 @@ class TabSpatial(ttk.Frame):
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # ===== CÁC NÚT BẤM VÀ SLIDER (Giữ nguyên) =====
+        # ===== CÁC NÚT BẤM VÀ SLIDER =====
         ttk.Label(scrollable, text="📂 Ảnh nguồn", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=5)
         ttk.Button(scrollable, text="Mở ảnh", command=self.open_image).pack(fill=tk.X, pady=3)
         ttk.Button(scrollable, text="Lưu ảnh", command=self.save_image).pack(fill=tk.X, pady=3)
