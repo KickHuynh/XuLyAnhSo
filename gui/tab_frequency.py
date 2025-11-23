@@ -65,7 +65,7 @@ class TabFrequency(ttk.Frame):
         filter_list = ["ILPF", "IHPF", "BLPF", "BHPF", "GLPF", "GHPF"]
         ttk.Label(scrollable, text="Chọn bộ lọc:").pack(anchor="w")
         filter_cb = ttk.Combobox(scrollable, textvariable=self.filter_choice,
-                                        values=filter_list, state="readonly")
+                                         values=filter_list, state="readonly")
         filter_cb.pack(fill=tk.X, pady=5)
         filter_cb.bind("<<ComboboxSelected>>", self.on_filter_selected)
         self.param_d0 = tk.DoubleVar(value=50)
@@ -118,7 +118,7 @@ class TabFrequency(ttk.Frame):
             messagebox.showwarning("⚠️ Cảnh báo", "Không có ảnh đã xử lý để lưu!")
             return
         path = filedialog.asksaveasfilename(defaultextension=".jpg",
-                                            filetypes=[("JPEG", "*.jpg"), ("PNG", ".png")])
+                                             filetypes=[("JPEG", "*.jpg"), ("PNG", ".png")])
         if path:
             # === Lưu ảnh màu ===
             cv2.imwrite(path, self.img_processed_cv)
@@ -181,17 +181,17 @@ class TabFrequency(ttk.Frame):
             self.label_n.config(state=tk.DISABLED)
             self.scale_n.config(state=tk.DISABLED)
 
-    # ===== HÀM XỬ LÝ =====
+    # ===== HÀM XỬ LÝ (ĐÃ SỬA LỖI LIVE PREVIEW) =====
     
-    def _run_filter_logic(self):
-        """Hàm logic chung. Trả về (ảnh kết quả, dictionary thời gian)"""
+    def _run_filter_logic(self, img_base):
+        """Hàm logic chung. Nhận ảnh cơ sở (img_base). Trả về (ảnh kết quả, dictionary thời gian)"""
         if not self.check_image_loaded(): return None, None
         
         mode = self.filter_choice.get()
         d0 = self.param_d0.get()
         n = self.param_n.get()
         
-        img_input = self.img_processed_cv.copy() 
+        img_input = img_base.copy() # Dùng ảnh được truyền vào (có thể là original hoặc processed)
 
         try:
             filter_func = None
@@ -217,9 +217,10 @@ class TabFrequency(ttk.Frame):
 
     def apply_filter_live(self):
         """Được gọi bởi SLIDER. Chỉ xem trước, không lưu history."""
-        # === Lấy ảnh GỐC để xem trước (live preview) ===
         if not self.check_image_loaded(): return
-        img_input = self.img_original_cv.copy() # Xem trước luôn dựa trên ảnh gốc
+        
+        # SỬA LỖI: Dùng self.img_processed_cv để xem trước trên ảnh đã chỉnh sửa hiện tại.
+        img_base_for_live = self.img_processed_cv 
         
         mode = self.filter_choice.get()
         d0 = self.param_d0.get()
@@ -238,9 +239,11 @@ class TabFrequency(ttk.Frame):
             result_cv, _ = (None, None) # Khởi tạo
             if filter_func:
                 if mode in ["BLPF", "BHPF"]:
-                    result_cv, _ = apply_frequency_filter(img_input, filter_func, d0, n)
+                    # Truyền ảnh đã xử lý hiện tại vào logic lọc
+                    result_cv, _ = apply_frequency_filter(img_base_for_live, filter_func, d0, n)
                 else:
-                    result_cv, _ = apply_frequency_filter(img_input, filter_func, d0)
+                    # Truyền ảnh đã xử lý hiện tại vào logic lọc
+                    result_cv, _ = apply_frequency_filter(img_base_for_live, filter_func, d0)
 
             if result_cv is not None:
                 self.display_live_preview(result_cv) # Hiển thị trên canvas 'edited'
@@ -249,9 +252,12 @@ class TabFrequency(ttk.Frame):
             
     def apply_filter_final(self):
         """Được gọi bởi NÚT BẤM. Áp dụng, lưu history, và hiển thị thời gian."""
+        
+        # Lưu ảnh đã xử lý hiện tại vào lịch sử TRƯỚC khi áp dụng bộ lọc mới
         self.history.append(self.img_processed_cv.copy())
         
-        result_cv, timings = self._run_filter_logic()
+        # CHỈNH SỬA: Truyền self.img_processed_cv làm ảnh cơ sở cho lần lọc này
+        result_cv, timings = self._run_filter_logic(self.img_processed_cv) 
         
         if result_cv is not None:
             self.img_processed_cv = result_cv
@@ -262,7 +268,7 @@ class TabFrequency(ttk.Frame):
                 # Sắp xếp lại timings để dễ đọc
                 time_order = ['A_Convert_YUV_ms', '1_Forward_DFT_ms', '2_FFT_Shift_ms', 
                               '3_Multiply_Filter_H_ms', '4_IFFT_Shift_ms', '5_Inverse_DFT_ms', 'B_Merge_BGR_ms']
-                details = "\n".join([f"  - {step}: {timings[step]:.2f} ms" for step in time_order if step in timings])
+                details = "\n".join([f"  - {step}: {timings[step]:.2f} ms" for step in time_order if step in timings])
 
                 messagebox.showinfo(
                     "Đo thời gian (Miền Tần số - Ảnh màu)",
@@ -280,7 +286,6 @@ class TabFrequency(ttk.Frame):
             if canvas_w <= 1 or canvas_h <= 1:
                 canvas_w, canvas_h = 650, 650
 
-            # === Bỏ chuyển đổi Gray-BGR ===
             img_to_show = preview_img
             img_rgb = cv2.cvtColor(img_to_show, cv2.COLOR_BGR2RGB)
             img_pil = Image.fromarray(img_rgb)

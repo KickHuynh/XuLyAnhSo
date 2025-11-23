@@ -72,7 +72,7 @@ def apply_frequency_filter(img_bgr, H_filter_func, D0, n=None):
     # Trả về ảnh MÀU đã lọc và dictionary thời gian
     return img_bgr_filtered, timings
 
-# (Các hàm IHPF, ILPF, BLPF... giữ nguyên)
+# Cac ham
 def IHPF(rows, cols, D0):
     D = create_D_matrix(rows, cols)
     H = np.ones((rows, cols))
