@@ -133,12 +133,12 @@ def gaussian_filter_pil(image, n, sigma=1.0):
 
 def median_filter(image, n):
     """Lọc trung vị. Mong đợi ảnh PIL, trả về ảnh PIL."""
-    # Dùng hàm `median_filter` của bạn (hỗ trợ cả ảnh PIL)
+    # Dùng hàm `median_filter` (hỗ trợ cả ảnh PIL)
     return image.filter(ImageFilter.MedianFilter(size=n))
 
 def max_min_filter(image, n, filter_type='min'):
     """Lọc Min/Max. Mong đợi ảnh PIL, trả về ảnh PIL."""
-    # Dùng hàm `max_min_filter` của bạn (hỗ trợ cả ảnh PIL)
+    # Dùng hàm `max_min_filter` (hỗ trợ cả ảnh PIL)
     if filter_type == 'min':
         return image.filter(ImageFilter.MinFilter(size=n))
     else:
@@ -146,7 +146,7 @@ def max_min_filter(image, n, filter_type='min'):
 
 def midpoint_filter(image, n):
     """Lọc Midpoint. Mong đợi ảnh PIL, trả về ảnh PIL."""
-    # Dùng hàm `midpoint_filter` của bạn
+    # Dùng hàm `midpoint_filter` 
     img = np.array(image, dtype=np.uint8)
     h, w, c = img.shape
     s = n // 2
@@ -165,7 +165,7 @@ def midpoint_filter(image, n):
 
 def sobel_filter_pil(image):
     """Lọc Sobel. Mong đợi ảnh PIL, trả về ảnh PIL."""
-    # Dùng hàm `sobel_filter` của bạn
+    # Dùng hàm `sobel_filter` 
     img_l = image.convert('L') # Chuyển sang ảnh xám
     img = np.array(img_l, dtype=np.float32)
     is_pil = True

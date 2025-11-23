@@ -9,7 +9,6 @@ import threading
 
 import matplotlib.pyplot as plt
 
-# Giả định đã đổi tên file thành hw2_ops_spatial_pil và hw3_ops_frequency
 import processing.hw2_ops_spatial_pil as spatial_ops
 import processing.hw3_ops_frequency as freq_ops
 
@@ -20,9 +19,9 @@ class TabBenchmark(ttk.Frame):
         
         self.image_path = None
         self.img_pil = None
-        # THÊM: Biến lưu ảnh BGR 3 kênh cho lọc Tần số
+        # Biến lưu ảnh BGR 3 kênh cho lọc Tần số
         self.img_bgr_cv = None 
-        # Giữ: Biến lưu ảnh xám 1 kênh cho các mục đích khác (nếu cần)
+        # Biến lưu ảnh xám 1 kênh cho các mục đích khác 
         self.img_gray_cv = None 
         self.chart_tk = None 
 
@@ -58,7 +57,7 @@ class TabBenchmark(ttk.Frame):
         
         ttk.Separator(settings_frame).pack(fill=tk.X, pady=15)
         
-        # --- CÁC TÙY CHỌN BỔ SUNG (ĐÃ THAY BẰNG COMBOBOX) ---
+        # --- CÁC TÙY CHỌN BỔ SUNG ---
         
         ttk.Label(settings_frame, text="Cấu hình Bộ lọc:", font=("Segoe UI", 11, "bold")).pack(anchor="w")
 
@@ -112,7 +111,7 @@ class TabBenchmark(ttk.Frame):
         table_frame = ttk.Frame(results_frame)
         table_frame.pack(fill=tk.X, expand=False, pady=10)
         
-        # Cột mới: S1, S2, F1, F2 (sẽ được cập nhật tên)
+        # Cột mới: S1, S2, F1, F2 
         cols = ('kernel', 'spatial1', 'spatial2', 'frequency1', 'frequency2')
         self.tree = ttk.Treeview(table_frame, columns=cols, show='headings', height=8)
         self.tree.heading('kernel', text='Kích thước K')

@@ -77,7 +77,7 @@ class TabGallery(ttk.Frame):
                 print("Lỗi khi refresh:", e)
 
         if self._resize_after_id:
-            self.after_cancel(self._resize_after_id) # Sửa lỗi: self.resize_after_id -> self._resize_after_id
+            self.after_cancel(self._resize_after_id) # self.resize_after_id -> self._resize_after_id
         self._resize_after_id = self.after(300, delayed)
 
     def _set_view_mode(self, mode):
@@ -177,7 +177,7 @@ class TabGallery(ttk.Frame):
             self.lbl_folder.config(text=self.folder)
             self._refresh_view()
 
-    # ===== CHỨC NĂNG XỬ LÝ ẢNH (ĐÃ ĐIỀN ĐẦY ĐỦ) =====
+    # ===== CHỨC NĂNG XỬ LÝ ẢNH =====
     
     def _run_in_thread(self, fn):
         threading.Thread(target=fn, daemon=True).start()
@@ -192,7 +192,7 @@ class TabGallery(ttk.Frame):
         """Đọc tập ảnh và hiển thị mỗi ảnh trên một cửa sổ riêng."""
         def job():
             cv2.startWindowThread()
-            if len(self.image_paths) < 1: # Giảm từ 10 xuống 1 để dễ test
+            if len(self.image_paths) < 1: 
                 messagebox.showerror("Lỗi", f"Cần ít nhất 1 ảnh trong thư mục (hiện có {len(self.image_paths)}).")
                 return
             for i, p in enumerate(self.image_paths, 1):
@@ -276,7 +276,7 @@ class TabGallery(ttk.Frame):
     def run_auto_demo(self):
         def job():
             cv2.startWindowThread()
-            if len(self.image_paths) < 1: # Giảm từ 10 xuống 1
+            if len(self.image_paths) < 1:
                 messagebox.showerror("Lỗi", f"Cần ít nhất 1 ảnh để chạy AUTO DEMO (hiện có {len(self.image_paths)}).")
                 return
             p0 = self.image_paths[0]

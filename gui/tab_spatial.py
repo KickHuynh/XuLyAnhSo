@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import time 
 
-# Import các hàm xử lý ảnh từ mô-đun đã định nghĩa
 from processing.hw2_ops_spatial_pil import (
     negative_image, log_transform, gamma_transform, piecewise_linear, equalize_histogram,
     mean_filter_basic, gaussian_filter_basic,
@@ -49,7 +48,7 @@ class TabSpatial(ttk.Frame):
 
         canvas = tk.Canvas(right_frame, bg="#f5f6fa", highlightthickness=0, width=300)
         scrollbar = ttk.Scrollbar(right_frame, orient="vertical", command=canvas.yview)
-        self.scrollable = ttk.Frame(canvas) # Đổi tên scrollable để dễ truy cập
+        self.scrollable = ttk.Frame(canvas) 
         
         self.scrollable.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas_window = canvas.create_window((0,0), window=self.scrollable, anchor="nw")
@@ -115,7 +114,7 @@ class TabSpatial(ttk.Frame):
         ttk.Button(self.scrollable, text="Áp dụng biến đổi", command=self.apply_transform).pack(fill=tk.X, pady=5)
         ttk.Separator(self.scrollable).pack(fill=tk.X, pady=10)
 
-        # ===== LỌC KHÔNG GIAN (Giữ nguyên) =====
+        # ===== LỌC KHÔNG GIAN =====
         ttk.Label(self.scrollable, text="🧩 Lọc không gian", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=5)
         self.filter_choice = tk.StringVar(value="Mean")
         ttk.Label(self.scrollable, text="Chọn loại lọc:").pack(anchor="w")
@@ -132,11 +131,11 @@ class TabSpatial(ttk.Frame):
                 variable=self.kernel_size, command=lambda e: self.delayed_apply(self.apply_filter)).pack(fill=tk.X)
         ttk.Button(self.scrollable, text="Áp dụng lọc", command=self.apply_filter).pack(fill=tk.X, pady=5)
         
-    # === HÀM MỚI: CẬP NHẬT GIAO DIỆN THAM SỐ ===
+    # === CẬP NHẬT GIAO DIỆN THAM SỐ ===
     def on_transform_change(self, event):
         """Xử lý sự kiện khi kiểu biến đổi thay đổi."""
         self.update_transform_controls()
-        self.apply_transform(live=True) # Áp dụng ngay để thấy kết quả trên ảnh đã chỉnh sửa
+        self.apply_transform(live=True) 
 
     def update_transform_controls(self):
         """Ẩn/hiện các Frame tham số dựa trên lựa chọn ComboBox."""
@@ -158,7 +157,7 @@ class TabSpatial(ttk.Frame):
         # Negative và Equalize Histogram không cần tham số
 
 
-    # ======= HÀM CHUYỂN ĐỔI CV2 <-> PIL (Giữ nguyên) =======
+    # ======= HÀM CHUYỂN ĐỔI CV2 <-> PIL =======
     def cv2_to_pil(self, img_cv):
         """Chuyển ảnh CV2 (BGR) sang PIL (RGB)."""
         img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
@@ -169,7 +168,7 @@ class TabSpatial(ttk.Frame):
         img_np = np.array(img_pil)
         return cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-    # ======= HÀM LOGIC CHUNG (Giữ nguyên) =======
+    # ======= HÀM LOGIC CHUNG =======
     def set_new_image(self, img_cv):
         """Hàm này được MainApp gọi. Nhận ảnh CV2, chuyển sang PIL."""
         self.img_pil = self.cv2_to_pil(img_cv)
@@ -269,7 +268,7 @@ class TabSpatial(ttk.Frame):
         
         # 1. XÁC ĐỊNH ẢNH ĐẦU VÀO VÀ LƯU LỊCH SỬ
         if live:
-            # SỬA LỖI: Ảnh đầu vào là ảnh đã chỉnh sửa hiện tại
+            # Ảnh đầu vào là ảnh đã chỉnh sửa hiện tại
             img_input = self.img_edited_pil.copy() 
         else:
             # Áp dụng: Lưu lịch sử và dùng ảnh đã chỉnh sửa hiện tại làm đầu vào
@@ -317,7 +316,7 @@ class TabSpatial(ttk.Frame):
         
         # 1. XÁC ĐỊNH ẢNH ĐẦU VÀO VÀ LƯU LỊCH SỬ
         if live:
-            # SỬA LỖI: Ảnh đầu vào là ảnh đã chỉnh sửa hiện tại
+            # Ảnh đầu vào là ảnh đã chỉnh sửa hiện tại
             img_input = self.img_edited_pil.copy()
         else:
             # Áp dụng: Lưu lịch sử và dùng ảnh đã chỉnh sửa hiện tại làm đầu vào

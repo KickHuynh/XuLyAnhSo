@@ -16,7 +16,7 @@ class TabFrequency(ttk.Frame):
 
         self.img_original_cv = None # Ảnh màu gốc
         # self.img_gray_cv = None     
-        self.img_processed_cv = None # Ảnh đã xử lý (bây giờ sẽ là ảnh màu)
+        self.img_processed_cv = None # Ảnh đã xử lý 
         self.slider_timer = None
         self.history = []
 
@@ -82,7 +82,7 @@ class TabFrequency(ttk.Frame):
         ttk.Button(scrollable, text="Áp dụng lọc", command=self.apply_filter_final).pack(fill=tk.X, pady=5)
         self.on_filter_selected()
 
-    # ======= HÀM MỚI: Nhận ảnh từ MainApp =======
+    # ======= Nhận ảnh từ MainApp =======
     def set_new_image(self, img_cv):
         """Hàm này được MainApp gọi để tải ảnh mới vào tab này"""
         self.img_original_cv = img_cv.copy() # Lưu ảnh màu gốc
@@ -219,7 +219,7 @@ class TabFrequency(ttk.Frame):
         """Được gọi bởi SLIDER. Chỉ xem trước, không lưu history."""
         if not self.check_image_loaded(): return
         
-        # SỬA LỖI: Dùng self.img_processed_cv để xem trước trên ảnh đã chỉnh sửa hiện tại.
+        # Dùng self.img_processed_cv để xem trước trên ảnh đã chỉnh sửa hiện tại.
         img_base_for_live = self.img_processed_cv 
         
         mode = self.filter_choice.get()
@@ -256,7 +256,7 @@ class TabFrequency(ttk.Frame):
         # Lưu ảnh đã xử lý hiện tại vào lịch sử TRƯỚC khi áp dụng bộ lọc mới
         self.history.append(self.img_processed_cv.copy())
         
-        # CHỈNH SỬA: Truyền self.img_processed_cv làm ảnh cơ sở cho lần lọc này
+        # Truyền self.img_processed_cv làm ảnh cơ sở cho lần lọc này
         result_cv, timings = self._run_filter_logic(self.img_processed_cv) 
         
         if result_cv is not None:
