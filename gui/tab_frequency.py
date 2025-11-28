@@ -6,7 +6,9 @@ import numpy as np
 import time 
 
 from processing.hw3_ops_frequency import (
-    apply_frequency_filter, IHPF, ILPF, BLPF, BHPF, GLPF, GHPF
+    apply_frequency_filter, IHPF, ILPF, BLPF, BHPF, GLPF, GHPF,
+    process_hw3_1_sequential, 
+    process_hw3_2_iterative_ghpf
 )
 
 class TabFrequency(ttk.Frame):
@@ -81,6 +83,14 @@ class TabFrequency(ttk.Frame):
         self.scale_n.pack(fill=tk.X)
         ttk.Button(scrollable, text="Áp dụng lọc", command=self.apply_filter_final).pack(fill=tk.X, pady=5)
         self.on_filter_selected()
+        ttk.Separator(scrollable).pack(fill=tk.X, pady=10)
+        ttk.Label(scrollable, text="✅ Giải Bài Tập HW3", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=5)
+        
+        ttk.Button(scrollable, text="HW3-1 (Tay X-ray: LP -> HP, D0=25)", 
+                   command=self.run_hw3_1).pack(fill=tk.X, pady=3)
+        
+        ttk.Button(scrollable, text="HW3-2 (PCB: GHPF x 1, 10, 100)", 
+                   command=self.run_hw3_2).pack(fill=tk.X, pady=3)
 
     # ======= Nhận ảnh từ MainApp =======
     def set_new_image(self, img_cv):
@@ -296,3 +306,137 @@ class TabFrequency(ttk.Frame):
             self.edited_canvas.image = img_tk
         except Exception as e:
             print(f"Lỗi hiển thị live preview: {e}")
+
+    def run_hw3_1(self):
+        """Xử lý bài tập HW3-1: GLPF -> GHPF."""
+        if not self.check_image_loaded(): return
+        
+        self.history.append(self.img_processed_cv.copy())
+        
+        try:
+            # Sử dụng ảnh gốc (self.img_original_cv) cho chuỗi xử lý này
+            result_cv, timings = process_hw3_1_sequential(self.img_original_cv, D0=25)
+        except Exception as e:
+            messagebox.showerror("Lỗi HW3-1", f"Lỗi trong quá trình xử lý: {e}")
+            return
+
+        if result_cv is not None:
+            self.img_processed_cv = result_cv
+            self.display_images()
+            
+            msg = (f"✅ Hoàn thành HW3-1 (GLPF -> GHPF) với D0=25.\n\n"
+                   f"Tổng thời gian xử lý: {timings['Total_time_ms']:.2f} ms\n"
+                   f"Thời gian GLPF: {timings['LP_Filter_Time_ms']:.2f} ms\n"
+                   f"Thời gian GHPF: {timings['HP_Filter_Time_ms']:.2f} ms")
+            messagebox.showinfo("Kết quả HW3-1", msg)
+
+
+    # File: tab_frequency.py (Sửa đổi hàm run_hw3_2)
+
+    def run_hw3_2(self):
+        """Xử lý bài tập HW3-2: GHPF lặp lại 1, 10, 100 lần."""
+        if not self.check_image_loaded(): return
+        
+        self.history.append(self.img_processed_cv.copy())
+
+        try:
+            # Sử dụng ảnh gốc (self.img_original_cv)
+            results_dict = process_hw3_2_iterative_ghpf(self.img_original_cv, D0=30)
+        except Exception as e:
+            messagebox.showerror("Lỗi HW3-2", f"Lỗi trong quá trình xử lý: {e}")
+            return
+            
+        if results_dict:
+            # Vẫn hiển thị kết quả 100 passes trên canvas chính
+            self.img_processed_cv = results_dict[100]['image']
+            self.display_images()
+            
+            # === GỌI HÀM HIỂN THỊ CỬA SỔ SO SÁNH ===
+            self.show_hw3_2_comparison(results_dict, self.img_original_cv)
+            
+            # Hiển thị messagebox thời gian (giữ nguyên)
+            msg = "✅ Hoàn thành HW3-2 (GHPF lặp lại) với D0=30.\n\n"
+            
+            for passes, data in results_dict.items():
+                 msg += f"- {passes} passes: {data['time_ms']:.2f} ms\n"
+
+            messagebox.showinfo("Kết quả HW3-2", msg + "\n\n(Ảnh hiển thị là kết quả sau 100 lần lọc)")
+
+            # File: tab_frequency.py (Thêm vào trong class TabFrequency)
+
+    def convert_cv_to_tk(self, cv_img, max_size=(300, 300)):
+        """Chuyển ảnh OpenCV sang PhotoImage (có resize)"""
+        if cv_img is None:
+            return None
+        
+        # Đảm bảo ảnh ở định dạng 8-bit (uint8) để hiển thị
+        if cv_img.dtype != np.uint8:
+             # Chuẩn hóa nếu ảnh bị float (thường xảy ra sau phép lọc)
+             img_normalized = cv_img.copy()
+             cv2.normalize(img_normalized, img_normalized, 0, 255, cv2.NORM_MINMAX)
+             img_cv_8bit = np.uint8(img_normalized)
+        else:
+             img_cv_8bit = cv_img
+             
+        # Chuyển BGR sang RGB
+        img_rgb = cv2.cvtColor(img_cv_8bit, cv2.COLOR_BGR2RGB)
+        img_pil = Image.fromarray(img_rgb)
+        
+        # Resize ảnh để vừa khung
+        img_pil.thumbnail(max_size)
+        
+        return ImageTk.PhotoImage(img_pil)
+    
+
+    # File: tab_frequency.py (Thêm vào trong class TabFrequency)
+
+    def show_hw3_2_comparison(self, results_dict, original_img):
+        """Tạo cửa sổ mới hiển thị 4 ảnh: Gốc, 1, 10, 100 Passes."""
+        
+        # --- CẤU HÌNH CỬA SỔ ---
+        comp_window = tk.Toplevel(self)
+        comp_window.title("HW3-2: So sánh GHPF x 1, 10, 100")
+        comp_window.transient(self.winfo_toplevel()) # Giữ cửa sổ con nằm trên cửa sổ chính
+        
+        # Chuẩn bị dữ liệu ảnh (sử dụng ảnh gốc từ self.img_original_cv)
+        images = {
+            "Ảnh Gốc": original_img,
+            "1 Pass": results_dict[1]['image'],
+            "10 Passes": results_dict[10]['image'],
+            "100 Passes": results_dict[100]['image'],
+        }
+        
+        # Tạo khung chính 
+        frame = ttk.Frame(comp_window, padding="10")
+        frame.pack(padx=10, pady=10)
+        
+        # --- BỐ CỤC 2x2 ---
+        row_offset = 0
+        col_offset = 0
+        max_size = (350, 350) # Kích thước tối đa cho mỗi ảnh trong cửa sổ
+        
+        for i, (title, img_cv) in enumerate(images.items()):
+            
+            # Cột và hàng hiện tại (0,0), (0,1), (2,0), (2,1)
+            row = row_offset
+            col = col_offset
+            
+            # 1. Tiêu đề
+            ttk.Label(frame, text=title, font=("Segoe UI", 10, "bold")).grid(row=row, column=col, pady=(5, 0))
+            
+            # 2. Chuyển đổi và resize ảnh
+            img_tk = self.convert_cv_to_tk(img_cv, max_size=max_size) 
+            
+            # 3. Label/Canvas chứa ảnh
+            label = tk.Label(frame, image=img_tk, relief="sunken")
+            label.image = img_tk # Giữ tham chiếu để tránh bị Garbage Collection
+            label.grid(row=row + 1, column=col, padx=10, pady=5)
+            
+            # Cập nhật vị trí cho ảnh tiếp theo
+            col_offset += 1
+            if col_offset > 1:
+                col_offset = 0
+                row_offset += 2 # Chuyển sang hàng mới (bỏ qua hàng chứa ảnh)
+
+
+    

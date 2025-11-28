@@ -105,3 +105,29 @@ def GHPF(rows, cols, D0):
     D = create_D_matrix(rows, cols)
     H = 1 - np.exp(-(D**2) / (2 * (D0**2)))
     return H
+
+def process_hw3_1_sequential(img_bgr, D0=25):
+    start_time = time.perf_counter() 
+    img_lowpass, timings_lp = apply_frequency_filter(img_bgr, GLPF, D0)
+    img_final, timings_hp = apply_frequency_filter(img_lowpass, GHPF, D0)
+    end_time = time.perf_counter()
+    total_timings = {
+        "Total_time_ms": (end_time - start_time) * 1000,
+        "LP_Filter_Time_ms": sum(timings_lp.values()),
+        "HP_Filter_Time_ms": sum(timings_hp.values())
+    }
+    return img_final, total_timings
+
+def process_hw3_2_iterative_ghpf(img_bgr, D0=30, passes=[1, 10, 100]):
+    results = {}
+    for num_passes in passes:
+        start_time_total = time.perf_counter()
+        img_processed = img_bgr.copy() 
+        for i in range(num_passes):
+            img_processed, _ = apply_frequency_filter(img_processed, GHPF, D0)
+        end_time_total = time.perf_counter()
+        results[num_passes] = {
+            'image': img_processed,
+            'time_ms': (end_time_total - start_time_total) * 1000
+        }
+    return results

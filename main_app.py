@@ -46,10 +46,6 @@ class MainApp(tk.Tk):
             return
 
     def load_image_to_editors(self, image_path):
-        """
-        Đây là hàm "Cầu nối".
-        Tab 1 (Thư viện) sẽ gọi hàm này khi double-click.
-        """
         try:
             # 1. Đọc ảnh bằng CV2 (định dạng chuẩn của app)
             img_cv = cv2.imread(image_path)
