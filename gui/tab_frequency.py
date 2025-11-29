@@ -16,9 +16,9 @@ class TabFrequency(ttk.Frame):
         super().__init__(parent)
         self.main_app = main_app_ref
 
-        self.img_original_cv = None # Ảnh màu gốc
+        self.img_original_cv = None 
         # self.img_gray_cv = None     
-        self.img_processed_cv = None # Ảnh đã xử lý 
+        self.img_processed_cv = None
         self.slider_timer = None
         self.history = []
 
@@ -95,8 +95,8 @@ class TabFrequency(ttk.Frame):
     # ======= Nhận ảnh từ MainApp =======
     def set_new_image(self, img_cv):
         """Hàm này được MainApp gọi để tải ảnh mới vào tab này"""
-        self.img_original_cv = img_cv.copy() # Lưu ảnh màu gốc
-        self.img_processed_cv = self.img_original_cv.copy() # Ảnh xử lý cũng là ảnh màu
+        self.img_original_cv = img_cv.copy()
+        self.img_processed_cv = self.img_original_cv.copy() 
         self.history.clear() 
         self.display_images()
 
@@ -191,7 +191,7 @@ class TabFrequency(ttk.Frame):
             self.label_n.config(state=tk.DISABLED)
             self.scale_n.config(state=tk.DISABLED)
 
-    # ===== HÀM XỬ LÝ (ĐÃ SỬA LỖI LIVE PREVIEW) =====
+    # ===== HÀM XỬ LÝ =====
     
     def _run_filter_logic(self, img_base):
         """Hàm logic chung. Nhận ảnh cơ sở (img_base). Trả về (ảnh kết quả, dictionary thời gian)"""
@@ -201,8 +201,7 @@ class TabFrequency(ttk.Frame):
         d0 = self.param_d0.get()
         n = self.param_n.get()
         
-        img_input = img_base.copy() # Dùng ảnh được truyền vào (có thể là original hoặc processed)
-
+        img_input = img_base.copy() 
         try:
             filter_func = None
             if mode == "ILPF": filter_func = ILPF
@@ -226,12 +225,8 @@ class TabFrequency(ttk.Frame):
             return None, None
 
     def apply_filter_live(self):
-        """Được gọi bởi SLIDER. Chỉ xem trước, không lưu history."""
         if not self.check_image_loaded(): return
-        
-        # Dùng self.img_processed_cv để xem trước trên ảnh đã chỉnh sửa hiện tại.
         img_base_for_live = self.img_processed_cv 
-        
         mode = self.filter_choice.get()
         d0 = self.param_d0.get()
         n = self.param_n.get()
@@ -249,10 +244,8 @@ class TabFrequency(ttk.Frame):
             result_cv, _ = (None, None) # Khởi tạo
             if filter_func:
                 if mode in ["BLPF", "BHPF"]:
-                    # Truyền ảnh đã xử lý hiện tại vào logic lọc
                     result_cv, _ = apply_frequency_filter(img_base_for_live, filter_func, d0, n)
                 else:
-                    # Truyền ảnh đã xử lý hiện tại vào logic lọc
                     result_cv, _ = apply_frequency_filter(img_base_for_live, filter_func, d0)
 
             if result_cv is not None:
@@ -260,13 +253,9 @@ class TabFrequency(ttk.Frame):
         except Exception as e:
             print(f"Lỗi live preview: {e}")
             
-    def apply_filter_final(self):
-        """Được gọi bởi NÚT BẤM. Áp dụng, lưu history, và hiển thị thời gian."""
-        
-        # Lưu ảnh đã xử lý hiện tại vào lịch sử TRƯỚC khi áp dụng bộ lọc mới
+    def apply_filter_final(self):        
         self.history.append(self.img_processed_cv.copy())
         
-        # Truyền self.img_processed_cv làm ảnh cơ sở cho lần lọc này
         result_cv, timings = self._run_filter_logic(self.img_processed_cv) 
         
         if result_cv is not None:
@@ -279,7 +268,6 @@ class TabFrequency(ttk.Frame):
                 time_order = ['A_Convert_YUV_ms', '1_Forward_DFT_ms', '2_FFT_Shift_ms', 
                               '3_Multiply_Filter_H_ms', '4_IFFT_Shift_ms', '5_Inverse_DFT_ms', 'B_Merge_BGR_ms']
                 details = "\n".join([f"  - {step}: {timings[step]:.2f} ms" for step in time_order if step in timings])
-
                 messagebox.showinfo(
                     "Đo thời gian (Miền Tần số - Ảnh màu)",
                     f"Thao tác: {self.filter_choice.get()}\n"
@@ -289,7 +277,6 @@ class TabFrequency(ttk.Frame):
                 )
 
     def display_live_preview(self, preview_img):
-        """Hiển thị ảnh xem trước trên canvas 'edited'"""
         try:
             canvas_w = self.edited_canvas.winfo_width() - 10
             canvas_h = self.edited_canvas.winfo_height() - 10
@@ -308,13 +295,9 @@ class TabFrequency(ttk.Frame):
             print(f"Lỗi hiển thị live preview: {e}")
 
     def run_hw3_1(self):
-        """Xử lý bài tập HW3-1: GLPF -> GHPF."""
         if not self.check_image_loaded(): return
-        
         self.history.append(self.img_processed_cv.copy())
-        
         try:
-            # Sử dụng ảnh gốc (self.img_original_cv) cho chuỗi xử lý này
             result_cv, timings = process_hw3_1_sequential(self.img_original_cv, D0=25)
         except Exception as e:
             messagebox.showerror("Lỗi HW3-1", f"Lỗi trong quá trình xử lý: {e}")
@@ -323,61 +306,40 @@ class TabFrequency(ttk.Frame):
         if result_cv is not None:
             self.img_processed_cv = result_cv
             self.display_images()
-            
             msg = (f"✅ Hoàn thành HW3-1 (GLPF -> GHPF) với D0=25.\n\n"
                    f"Tổng thời gian xử lý: {timings['Total_time_ms']:.2f} ms\n"
                    f"Thời gian GLPF: {timings['LP_Filter_Time_ms']:.2f} ms\n"
                    f"Thời gian GHPF: {timings['HP_Filter_Time_ms']:.2f} ms")
             messagebox.showinfo("Kết quả HW3-1", msg)
 
-
-    # File: tab_frequency.py (Sửa đổi hàm run_hw3_2)
-
     def run_hw3_2(self):
-        """Xử lý bài tập HW3-2: GHPF lặp lại 1, 10, 100 lần."""
         if not self.check_image_loaded(): return
-        
         self.history.append(self.img_processed_cv.copy())
-
         try:
-            # Sử dụng ảnh gốc (self.img_original_cv)
             results_dict = process_hw3_2_iterative_ghpf(self.img_original_cv, D0=30)
         except Exception as e:
             messagebox.showerror("Lỗi HW3-2", f"Lỗi trong quá trình xử lý: {e}")
             return
-            
         if results_dict:
-            # Vẫn hiển thị kết quả 100 passes trên canvas chính
             self.img_processed_cv = results_dict[100]['image']
             self.display_images()
-            
-            # === GỌI HÀM HIỂN THỊ CỬA SỔ SO SÁNH ===
             self.show_hw3_2_comparison(results_dict, self.img_original_cv)
-            
-            # Hiển thị messagebox thời gian (giữ nguyên)
             msg = "✅ Hoàn thành HW3-2 (GHPF lặp lại) với D0=30.\n\n"
-            
             for passes, data in results_dict.items():
                  msg += f"- {passes} passes: {data['time_ms']:.2f} ms\n"
-
             messagebox.showinfo("Kết quả HW3-2", msg + "\n\n(Ảnh hiển thị là kết quả sau 100 lần lọc)")
-
             # File: tab_frequency.py (Thêm vào trong class TabFrequency)
 
     def convert_cv_to_tk(self, cv_img, max_size=(300, 300)):
-        """Chuyển ảnh OpenCV sang PhotoImage (có resize)"""
         if cv_img is None:
             return None
         
-        # Đảm bảo ảnh ở định dạng 8-bit (uint8) để hiển thị
         if cv_img.dtype != np.uint8:
-             # Chuẩn hóa nếu ảnh bị float (thường xảy ra sau phép lọc)
              img_normalized = cv_img.copy()
              cv2.normalize(img_normalized, img_normalized, 0, 255, cv2.NORM_MINMAX)
              img_cv_8bit = np.uint8(img_normalized)
         else:
-             img_cv_8bit = cv_img
-             
+             img_cv_8bit = cv_img   
         # Chuyển BGR sang RGB
         img_rgb = cv2.cvtColor(img_cv_8bit, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img_rgb)
@@ -387,16 +349,11 @@ class TabFrequency(ttk.Frame):
         
         return ImageTk.PhotoImage(img_pil)
     
-
-    # File: tab_frequency.py (Thêm vào trong class TabFrequency)
-
     def show_hw3_2_comparison(self, results_dict, original_img):
-        """Tạo cửa sổ mới hiển thị 4 ảnh: Gốc, 1, 10, 100 Passes."""
         
-        # --- CẤU HÌNH CỬA SỔ ---
         comp_window = tk.Toplevel(self)
         comp_window.title("HW3-2: So sánh GHPF x 1, 10, 100")
-        comp_window.transient(self.winfo_toplevel()) # Giữ cửa sổ con nằm trên cửa sổ chính
+        comp_window.transient(self.winfo_toplevel()) 
         
         # Chuẩn bị dữ liệu ảnh (sử dụng ảnh gốc từ self.img_original_cv)
         images = {
@@ -410,7 +367,6 @@ class TabFrequency(ttk.Frame):
         frame = ttk.Frame(comp_window, padding="10")
         frame.pack(padx=10, pady=10)
         
-        # --- BỐ CỤC 2x2 ---
         row_offset = 0
         col_offset = 0
         max_size = (350, 350) # Kích thước tối đa cho mỗi ảnh trong cửa sổ
@@ -420,19 +376,15 @@ class TabFrequency(ttk.Frame):
             # Cột và hàng hiện tại (0,0), (0,1), (2,0), (2,1)
             row = row_offset
             col = col_offset
-            
             # 1. Tiêu đề
             ttk.Label(frame, text=title, font=("Segoe UI", 10, "bold")).grid(row=row, column=col, pady=(5, 0))
-            
             # 2. Chuyển đổi và resize ảnh
             img_tk = self.convert_cv_to_tk(img_cv, max_size=max_size) 
-            
+
             # 3. Label/Canvas chứa ảnh
             label = tk.Label(frame, image=img_tk, relief="sunken")
             label.image = img_tk # Giữ tham chiếu để tránh bị Garbage Collection
             label.grid(row=row + 1, column=col, padx=10, pady=5)
-            
-            # Cập nhật vị trí cho ảnh tiếp theo
             col_offset += 1
             if col_offset > 1:
                 col_offset = 0
